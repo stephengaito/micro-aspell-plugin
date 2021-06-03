@@ -7,6 +7,7 @@ local config = import("micro/config")
 local util = import("micro/util")
 local utf = import("unicode/utf8")
 
+config.RegisterCommonOption("aspell", "cmd", "aspell")
 config.RegisterCommonOption("aspell", "check", "auto")
 config.RegisterCommonOption("aspell", "lang", "")
 config.RegisterCommonOption("aspell", "dict", "")
@@ -39,8 +40,12 @@ local next = nil
 
 function runAspell(buf, onExit, ...)
     local options = {"pipe", "--encoding=utf-8"}
-    if filterModes[buf:FileType()] then
-        options[#options + 1] = "--mode=" .. filterModes[buf:FileType()]
+    if buf.Settings["aspell.check"]:lower() == 'onfiletype' then
+        options[#options + 1] = "--mode=" .. buf:FileType()
+    else
+        if filterModes[buf:FileType()] then
+            options[#options + 1] = "--mode=" .. filterModes[buf:FileType()]
+        end
     end
     if buf.Settings["aspell.lang"] ~= "" then
         options[#options + 1] = "--lang=" .. buf.Settings["aspell.lang"]
@@ -55,7 +60,11 @@ function runAspell(buf, onExit, ...)
         options[#options + 1] = argument
     end
 
-    local job = shell.JobSpawn("aspell", options, nil,
+    local aspellCmd = "aspell"
+    if buf.Settings["aspell.cmd"] ~= "" then
+        aspellCmd = buf.Settings["aspell.cmd"]
+    end
+    local job = shell.JobSpawn(aspellCmd, options, nil,
             nil, onExit, buf, unpack(arg))
     -- Enable terse mode
     shell.JobSend(job, "!\n")
@@ -72,7 +81,8 @@ end
 
 function spellcheck(buf)
     local check = buf.Settings["aspell.check"]
-    if check == "on" or (check == "auto" and filterModes[buf:FileType()]) then
+    if (check:sub(1,2) == "on" and buf:FileType() ~= "unknown") or
+       (check == "auto" and filterModes[buf:FileType()]) then
         if lock then
             next = buf
         else
@@ -207,7 +217,11 @@ function addpersonal(bp, args)
                 options[#options + 1] = argument
             end
 
-            local job = shell.JobSpawn("aspell", options, nil, nil, function ()
+            local aspellCmd = "aspell"
+            if buf.Settings["aspell.cmd"] ~= "" then
+                aspelCmd = buf.Settings["aspell.cmd"]
+            end
+            local job = shell.JobSpawn(aspellCmd, options, nil, nil, function ()
                 spellcheck(buf)
             end)
             shell.JobSend(job, "*" .. misspell.word .. "\n#\n")

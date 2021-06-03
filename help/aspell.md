@@ -10,9 +10,14 @@ with this plugin. If you are on Windows, you can install Aspell through
 
 ## Options
 
+* `aspell.cmd`: controls which command is used for spell checking. Defaults to
+  `aspell`.
+
 * `aspell.check`: controls whether spellchecking is performed. Possible values
-   are `on`, `off` and `auto`. When set to `auto`, only XML, C++, C, HTML, Perl
-   TeX and Markdown documents will be spellchecked. Defaults to `auto`.
+   are `on`, `onFileType`, `off` and `auto`. When set to `auto`, only XML, 
+   C++, C, HTML, Perl TeX and Markdown documents will be spellchecked. 
+   When set to `onFileType`, the buffer's file type will be passed to 
+   aspell as the mode. Defaults to `auto`. 
 
 * `aspell.lang`: language to use. Two letter language code, optionally followed
    by an underscore or a dash and a two letter country code. It will be passed
